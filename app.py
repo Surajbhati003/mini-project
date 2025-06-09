@@ -8,7 +8,7 @@ import numpy as np
 
 # Configure page
 st.set_page_config(
-    page_title="Political Leaning Analyzer",
+    page_title="Nishkarsh: Lens to unbiased News",
     page_icon="📰",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -123,7 +123,7 @@ st.markdown("""
 st.title("📰 Political Leaning Analyzer")
 st.markdown("""
 <div style="font-size: 1.1rem; line-height: 1.6;">
-Analyze news articles for political bias using advanced NLP techniques. 
+Analyze news articles for political bias using advanced ML techniques. 
 This tool evaluates content for left-leaning, right-leaning, or centrist perspectives.
 </div>
 """, unsafe_allow_html=True)
@@ -321,4 +321,4 @@ with right:
     st.caption("OpIndia, Swarajya, Republic Bharat, Zee News, NDTV, ABP")
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Political Leaning Analyzer v1.0 | © 2023")
+st.sidebar.caption("Nishkarsh: Lens to unbiased News v1.0 | © 2023")
