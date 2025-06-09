@@ -136,9 +136,6 @@ from transformers import AutoConfig
 from transformers import pipeline
 import streamlit as st
 
-if not hasattr(torch, "classes"):
-    torch.classes = type("torch.classes", (), {})()
-
 # Set device
 @st.cache_resource
 def set_model():
@@ -319,8 +316,8 @@ def get_source_bias_weight(source):
 def analyze_article(article, source, weights=(0.4, 0.4, 0.2), w_sentiment=0.1):
     # Step 1: RoBERTa direct prediction
     direct_prediction = predict_leaning(article)
-    predicted_label = direct_prediction['label']
-    print(f"RoBERTa Model Prediction: {predicted_label} ({direct_prediction['confidence']*100:.2f}%)")
+    predicted_label = direct_prediction[0]
+    print(f"RoBERTa Model Prediction: {predicted_label} ({direct_prediction[1]*100:.2f}%)")
 
     # Step 2: TF-IDF Scores
     left_tfidf, right_tfidf, centrist_tfidf = calculate_tfidf_scores(article)
@@ -407,8 +404,8 @@ def generate_neutral_summary(text):
 def print_structured_bias_report(result):
     print("\n===== Bias Analysis Report =====\n")
     print(f"0. RoBERTa Model Prediction:")
-    print(f"   Predicted Label : {result['Model_Prediction']['label']}")
-    print(f"   Confidence       : {result['Model_Prediction']['confidence']*100:.2f}%\n")
+    print(f"   Predicted Label : {result['Model_Prediction'][0]}")
+    print(f"   Confidence       : {result['Model_Prediction'][1]*100:.2f}%\n")
 
     print(f"1. TF-IDF Scores:")
     print(f"   Leftist   : {result['TFIDF_Scores'][0]:.4f}")
@@ -453,7 +450,3 @@ def analyze_and_summarize(article, source):
     print("\n===========================")
 
     return bias_result, summary
-
-left_embedding = get_lexicon_embedding(left_lexicon_lower)
-right_embedding = get_lexicon_embedding(right_lexicon_lower)
-centrist_embedding = get_lexicon_embedding(centrist_lexicon_lower)
