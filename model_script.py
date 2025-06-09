@@ -119,6 +119,7 @@ centrist_lexicon = [
 ]
 #Code3
 # ------------------- Imports ------------------- #
+import streamlit as st
 import torch
 import torch.nn.functional as F
 import requests
@@ -134,7 +135,7 @@ from transformers import (
     AutoTokenizer, AutoModelForSequenceClassification,
     AutoConfig, pipeline
 )
-import streamlit as st
+
 
 # ------------------- Streamlit Setup ------------------- #
 if not hasattr(torch, "classes"):
@@ -190,6 +191,14 @@ def predict_leaning(text):
     return prediction.item(), confidence.item(), probs.squeeze().tolist()
 
 # ------------------- TF-IDF Score ------------------- #
+def get_lexicon_embedding(lexicon):
+    tokens = tokenizer(lexicon, return_tensors="pt", padding=True, truncation=True).to(device)
+    with torch.no_grad():
+        outputs = model(**tokens)
+    last_hidden = outputs.hidden_states[-1]
+    return last_hidden.mean(dim=1)
+
+
 def calculate_tfidf_scores(text):
     text_lower = text.lower()
     tfidf_vector = tfidf_vectorizer.transform([text_lower]).toarray()[0]
@@ -338,6 +347,12 @@ def analyze_and_summarize(article, source):
 tokenizer, model, device = set_model()
 mpath = 'surajbhati003/political-leaning-model'
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+
+left_embedding = get_lexicon_embedding(left_lexicon)
+right_embedding = get_lexicon_embedding(right_lexicon)
+centrist_embedding = get_lexicon_embedding(centrist_lexicon)
+
 
 config = AutoConfig.from_pretrained(mpath)
 config.output_hidden_states = True
