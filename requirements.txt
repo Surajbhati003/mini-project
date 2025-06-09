@@ -10,3 +10,9 @@ tldextract
 scikit-learn
 jinja2
 readability-lxml>=0.8.1
+streamlit
+matplotlib
+seaborn
+
+
+
