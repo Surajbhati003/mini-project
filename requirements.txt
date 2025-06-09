@@ -9,3 +9,4 @@ readability-lxml
 tldextract
 scikit-learn
 jinja2
+readability-lxml>=0.8.1

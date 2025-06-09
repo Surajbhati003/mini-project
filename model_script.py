@@ -124,7 +124,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import requests
-from readability.readability import Document
+from readability import Document
 from bs4 import BeautifulSoup
 import tldextract
 import re
@@ -137,6 +137,8 @@ from transformers import pipeline
 
 
 mpath='surajbhati003/political-leaning-model'
+
+set_model()
 
 
 
@@ -164,15 +166,18 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
 
 # Set device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Loading main model")
-# Load tokenizer and model from fine-tuned path
-# Set device
-tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
-model = AutoModelForSequenceClassification.from_pretrained(
-    "surajbhati003/political-leaning-model",
-    output_hidden_states=True
-).to(device)
+@st.cache_resource
+def set_model():
+    device = torch.device("cpu")
+    print("Loading main model")
+    # Load tokenizer and model from fine-tuned path
+    # Set device
+    tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "surajbhati003/political-leaning-model",
+        output_hidden_states=True
+    ).to(device)
+
 
 # Map label indices to human-readable labels (based on training)
 id2label = {0: "Left", 1: "Center", 2: "Right"}
