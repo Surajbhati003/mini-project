@@ -334,32 +334,32 @@ def analyze_and_summarize(article, source):
     return bias_result, summary
 
 # ------------------- Main Entry ------------------- #
-if __name__ == "__main__":
-    tokenizer, model, device = set_model()
-    mpath = 'surajbhati003/political-leaning-model'
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
-    config = AutoConfig.from_pretrained(mpath)
-    config.output_hidden_states = True
+tokenizer, model, device = set_model()
+mpath = 'surajbhati003/political-leaning-model'
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
-    tokenizer = AutoTokenizer.from_pretrained(mpath)
-    model = AutoModelForSequenceClassification.from_pretrained(mpath, config=config).to(device)
-    model.eval()
+config = AutoConfig.from_pretrained(mpath)
+config.output_hidden_states = True
 
-    tokens = tokenizer("This is a test", return_tensors="pt").to(device)
-    with torch.no_grad():
-        left_lexicon_lower = [word.lower() for word in left_lexicon]
-        right_lexicon_lower = [word.lower() for word in right_lexicon]
-        centrist_lexicon_lower = [word.lower() for word in centrist_lexicon]
+tokenizer = AutoTokenizer.from_pretrained(mpath)
+model = AutoModelForSequenceClassification.from_pretrained(mpath, config=config).to(device)
+model.eval()
 
-    full_vocab = sorted(list(set(left_lexicon_lower + right_lexicon_lower + centrist_lexicon_lower)))
-    tfidf_vectorizer = TfidfVectorizer(vocabulary=full_vocab)
-    tfidf_vectorizer.fit([" ".join(full_vocab)])
-    outputs = model(**tokens)
+tokens = tokenizer("This is a test", return_tensors="pt").to(device)
+with torch.no_grad():
+    left_lexicon_lower = [word.lower() for word in left_lexicon]
+    right_lexicon_lower = [word.lower() for word in right_lexicon]
+    centrist_lexicon_lower = [word.lower() for word in centrist_lexicon]
 
-    print("Hidden states returned?", outputs.hidden_states is not None)
+full_vocab = sorted(list(set(left_lexicon_lower + right_lexicon_lower + centrist_lexicon_lower)))
+tfidf_vectorizer = TfidfVectorizer(vocabulary=full_vocab)
+tfidf_vectorizer.fit([" ".join(full_vocab)])
+outputs = model(**tokens)
 
-    sentiment_analyzer = pipeline(
+print("Hidden states returned?", outputs.hidden_states is not None)
+
+sentiment_analyzer = pipeline(
         "sentiment-analysis",
         model="distilbert-base-uncased-finetuned-sst-2-english"
-    )
+)
