@@ -1,11 +1,11 @@
-torch==2.3.0 # Or a version compatible with your CUDA/CPU setup, e.g., 2.2.0 or 2.1.0
-transformers==4.41.2 # A recent stable version
-scikit-learn==1.4.2 # For TfidfVectorizer and related utilities
+torch==2.7.1 # Updated to a version compatible with Python 3.13.3
+transformers==4.41.2
+scikit-learn==1.4.2
 numpy==1.26.4
 requests==2.32.3
-readability-lxml==0.8.4.1 # For readability.readability.Document
+readability-lxml==0.8.4.1
 beautifulsoup4==4.12.3
 tldextract==5.1.1
-streamlit==1.36.0 # A recent stable version
+streamlit==1.36.0
 matplotlib==3.9.0
 seaborn==0.13.2
