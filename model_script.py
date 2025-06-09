@@ -1,17 +1,3 @@
-
-import torch
-from transformers import pipeline
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers import RobertaTokenizer, RobertaModel
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import requests
-from readability.readability import Document
-from bs4 import BeautifulSoup
-import tldextract
-import re
-
 # Define lexicons
 left_lexicon = [
     'dalit', 'ambedkarite', 'protest', 'caste', 'reservation',
@@ -131,13 +117,34 @@ centrist_lexicon = [
     "non-violent change", "comprehensive solutions", "moderate ideologies", "collaborative political agenda", "responsible governance",
     "institutional integrity", "just reforms", "economic compromise", "stable policy framework"
 ]
+#Code3
+import torch
+from transformers import RobertaTokenizer, RobertaModel
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import requests
+from readability.readability import Document
+from bs4 import BeautifulSoup
+import tldextract
+import re
+from transformers import pipeline
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch.nn.functional as F
+from transformers import AutoConfig
+from transformers import pipeline
 
-# Set device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+mpath='surajbhati003/political-leaning-model'
+
+
+
+
 # ------------------- Source Lists ------------------- #
-left_sources = ['the wire', 'scroll.in', 'newsclick', 'the quint','the hindu','ndtv']
-right_sources = ['opindia', 'swarajya', 'republic bharat', 'zee news','ndtv','abp']
-centrist_sources = [ 'indian express', 'THE TIMES OF INDIA','THE ECONOMIC TIMES']
+left_sources = ['the wire', 'scroll.in', 'newsclick', 'the quint','the hindu']
+right_sources = ['opindia', 'swarajya', 'republic bharat', 'zee news','ndtv','abp','republic world']
+centrist_sources = [ 'indian express', 'THE TIMES OF INDIA','economic times','tribune']
 
 
 
@@ -152,13 +159,96 @@ left_lexicon = clean_lexicon(remove_duplicates(left_lexicon))
 right_lexicon = clean_lexicon(remove_duplicates(right_lexicon))
 centrist_lexicon = clean_lexicon(remove_duplicates(centrist_lexicon))
 
-# ------------------- RoBERTa Model Setup ------------------- #
+# ------------------- RoBERTa Model Setup + Classifier Prediction ------------------- #
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch.nn.functional as F
+
+# Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Loading main model")
+# Load tokenizer and model from fine-tuned path
 # Set device
 tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
 model = AutoModelForSequenceClassification.from_pretrained(
     "surajbhati003/political-leaning-model",
     output_hidden_states=True
 ).to(device)
+
+# Map label indices to human-readable labels (based on training)
+id2label = {0: "Left", 1: "Center", 2: "Right"}
+
+# Direct classification prediction using fine-tuned model
+def predict_leaning(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512).to(device)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+        probs = F.softmax(logits, dim=1)
+        predicted_class = torch.argmax(probs, dim=1).item()
+        confidence = torch.max(probs).item()
+    return {
+        'label': id2label[predicted_class],
+        'confidence': confidence,
+        'raw_probs': probs.squeeze().tolist()
+    }
+
+
+
+
+
+
+
+
+
+
+# 1. Load config and force output_hidden_states = True
+config = AutoConfig.from_pretrained(mpath)
+config.output_hidden_states = True  # crucial!
+
+# 2. Load model with config
+tokenizer = AutoTokenizer.from_pretrained(mpath)
+model = AutoModelForSequenceClassification.from_pretrained(mpath, config=config).to(device)
+model.eval()
+
+print("#1")
+tokens = tokenizer("This is a test", return_tensors="pt").to(device)
+with torch.no_grad():
+    outputs = model(**tokens)
+print('#2')
+
+print("Hidden states returned?", outputs.hidden_states is not None)
+
+# Map class indices to labels (edit based on your training labels)
+id2label = {0: "Left", 1: "Center", 2: "Right"}
+
+
+
+sentiment_analyzer = pipeline(
+    "sentiment-analysis",
+    model="distilbert-base-uncased-finetuned-sst-2-english"
+)
+
+
+
+def predict_leaning(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    model.to(device)
+    inputs = {key: val.to(device) for key, val in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+    
+    logits = outputs.logits
+    probs = torch.nn.functional.softmax(logits, dim=-1)
+    confidence, prediction = torch.max(probs, dim=1)
+    
+    return prediction.item(), confidence.item(), probs.squeeze().tolist()
+
+
+
+
 
 
 
@@ -200,44 +290,71 @@ def get_source_bias_weight(source):
     return (0.33, 0.33, 0.33)
 
 # ------------------- Main Analysis Function ------------------- #
-def analyze_article(article, source, weights=(0.4, 0.4, 0.2)):
-    # 1. TF-IDF Scores
-    left_tfidf, right_tfidf, centrist_tfidf = calculate_tfidf_scores(article)
-    print(left_tfidf,right_tfidf,centrist_tfidf)
+def analyze_article(article, source, weights=(0.4, 0.4, 0.2), w_sentiment=0.1):
+    # Step 1: RoBERTa direct prediction
+    direct_prediction = predict_leaning(article)
+    predicted_label = direct_prediction[0]
+    print(f"RoBERTa Model Prediction: {predicted_label} ({direct_prediction[1]*100:.2f}%)")
 
-    # 2. RoBERTa Embedding
+    # Step 2: TF-IDF Scores
+    left_tfidf, right_tfidf, centrist_tfidf = calculate_tfidf_scores(article)
+    print("TFIDF:", left_tfidf, right_tfidf, centrist_tfidf)
+
+    # Step 3: Embedding similarity with lexicons
     tokens = tokenizer(article, return_tensors="pt", truncation=True, max_length=512).to(device)
     with torch.no_grad():
         outputs = model(**tokens)
-        last_hidden = outputs.hidden_states[-1]
-        article_embedding = last_hidden.mean(dim=1)
+        article_embedding = outputs.hidden_states[-1].mean(dim=1)
 
-
-    # 3. Cosine Similarity to Lexicons
     left_sim = cosine_similarity(article_embedding.cpu(), left_embedding.cpu())[0][0]
     right_sim = cosine_similarity(article_embedding.cpu(), right_embedding.cpu())[0][0]
     centrist_sim = cosine_similarity(article_embedding.cpu(), centrist_embedding.cpu())[0][0]
-    print("LEXICON:",left_sim ,right_sim ,centrist_sim)
+    print("LEXICON SIM:", left_sim, right_sim, centrist_sim)
 
-    # 4. Source Bias Weights
+    # Step 4: Source bias weights
     left_bias, right_bias, centrist_bias = get_source_bias_weight(source)
-    print("Source:",left_bias,right_bias,centrist_bias)
+    print("Source Weights:", left_bias, right_bias, centrist_bias)
 
-    # 5. Final Score Aggregation
+    # Step 5: Base scores (TF-IDF + embedding + source)
     left_final = weights[0]*left_tfidf + weights[1]*left_sim + weights[2]*left_bias
     right_final = weights[0]*right_tfidf + weights[1]*right_sim + weights[2]*right_bias
     centrist_final = weights[0]*centrist_tfidf + weights[1]*centrist_sim + weights[2]*centrist_bias
 
-    scores = {'Leftist': left_final, 'Rightist': right_final, 'Centristist': centrist_final}
+    # Step 6: Sentiment analysis (optional nudge)
+    sentiment_score = get_sentiment_score(article)  # Range [-1, +1]
+
+    if predicted_label == "Left":
+        left_final += w_sentiment * sentiment_score
+    elif predicted_label == "Right":
+        right_final += w_sentiment * sentiment_score
+    elif predicted_label == "Center":
+        centrist_final += w_sentiment * sentiment_score
+
+    # Step 7: Final result
+    scores = {
+        'Leftist': left_final,
+        'Rightist': right_final,
+        'Centristist': centrist_final
+    }
     leaning = max(scores, key=scores.get)
 
     return {
-        'TFIDF_Scores': (left_tfidf, right_tfidf, centrist_tfidf),
-        'RoBERTa_Similarities': (left_sim, right_sim, centrist_sim),
-        'Source_Weights': (left_bias, right_bias, centrist_bias),
+        'Model_Prediction': direct_prediction,
+        'TFIDF_Scores': (float(left_tfidf), float(right_tfidf), float(centrist_tfidf)),
+        'RoBERTa_Similarities': (float(left_sim), float(right_sim), float(centrist_sim)),
+        'Source_Weights': (float(left_bias), float(right_bias), float(centrist_bias)),
         'Final_Scores': scores,
+        'Sentiment_Score': sentiment_score,
         'Final Conclusion': leaning
     }
+
+def get_sentiment_score(text):
+    result = sentiment_analyzer(text[:512])[0]  # Truncate long text for safe input
+    label = result['label']
+    score = result['score']
+    return score if label == "POSITIVE" else -score
+
+
 def extract_article_info_fallback(url):
     response = requests.get(url)
     doc = Document(response.text)
@@ -253,6 +370,7 @@ def extract_article_info_fallback(url):
 
 
 # Initialize summarizer globally (so it loads once)
+
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 def generate_neutral_summary(text):
@@ -262,6 +380,10 @@ def generate_neutral_summary(text):
 
 def print_structured_bias_report(result):
     print("\n===== Bias Analysis Report =====\n")
+    print(f"0. RoBERTa Model Prediction:")
+    print(f"   Predicted Label : {result['Model_Prediction'][0]}")
+    print(f"   Confidence       : {result['Model_Prediction'][1]*100:.2f}%\n")
+
     print(f"1. TF-IDF Scores:")
     print(f"   Leftist   : {result['TFIDF_Scores'][0]:.4f}")
     print(f"   Rightist  : {result['TFIDF_Scores'][1]:.4f}")
@@ -281,6 +403,10 @@ def print_structured_bias_report(result):
     print(f"   Leftist   : {result['Final_Scores']['Leftist']:.4f}")
     print(f"   Rightist  : {result['Final_Scores']['Rightist']:.4f}")
     print(f"   Centristist: {result['Final_Scores']['Centristist']:.4f}\n")
+
+    print(f"5. Sentiment Influence:")
+    print(f"   Score toward predicted class: {result['Sentiment_Score']:.4f}\n")
+
 
     print(f">>> Final Conclusion:  {result['Final Conclusion']}\n")
     print("===============================\n")
