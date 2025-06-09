@@ -120,7 +120,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # App Header
-st.title("📰 Political Leaning Analyzer")
+st.title("📰 Nishkarsh: Lens to unbiased News")
 st.markdown("""
 <div style="font-size: 1.1rem; line-height: 1.6;">
 Analyze news articles for political bias using advanced ML techniques. 
@@ -297,7 +297,7 @@ if st.button("Analyze Political Leaning", type="primary", use_container_width=Tr
 # Sidebar with information
 st.sidebar.header("About This Tool")
 st.sidebar.markdown("""
-This political leaning analyzer uses:
+This Nishkarsh: Lens to unbiased News uses:
 - **RoBERTa model** fine-tuned for political detection
 - **Lexicon analysis** with custom political dictionaries
 - **TF-IDF scoring** of political terminology
