@@ -260,23 +260,41 @@ def get_lexicon_embedding(lexicon):
     return last_hidden.mean(dim=1)
 
 
+left_lexicon_lower = [word.lower() for word in left_lexicon]
+right_lexicon_lower = [word.lower() for word in right_lexicon]
+centrist_lexicon_lower = [word.lower() for word in centrist_lexicon]
 
-left_embedding = get_lexicon_embedding(left_lexicon)
-right_embedding = get_lexicon_embedding(right_lexicon)
-centrist_embedding = get_lexicon_embedding(centrist_lexicon)
+full_vocab = sorted(list(set(left_lexicon_lower + right_lexicon_lower + centrist_lexicon_lower)))
 
-# ------------------- TF-IDF Setup ------------------- #
-full_vocab = left_lexicon + right_lexicon + centrist_lexicon
 tfidf_vectorizer = TfidfVectorizer(vocabulary=full_vocab)
+
+
 tfidf_vectorizer.fit([" ".join(full_vocab)])
 
+
 def calculate_tfidf_scores(text):
-    tfidf_vector = tfidf_vectorizer.transform([text]).toarray()[0]
+    """
+    Calculates TF-IDF scores for the input text against political lexicons.
+    Ensures consistent lowercasing to avoid 'UserWarning'.
+
+    Args:
+        text (str): The input text to analyze.
+
+    Returns:
+        tuple: A tuple containing (left_score, right_score, centrist_score).
+    """
+    text_lower = text.lower()
+    
+    tfidf_vector = tfidf_vectorizer.transform([text_lower]).toarray()[0]
+    
     features = tfidf_vectorizer.get_feature_names_out()
-    left = sum(tfidf_vector[i] for i, w in enumerate(features) if w in left_lexicon)
-    right = sum(tfidf_vector[i] for i, w in enumerate(features) if w in right_lexicon)
-    centrist = sum(tfidf_vector[i] for i, w in enumerate(features) if w in centrist_lexicon)
-    return left, right, centrist
+
+    left_score = sum(tfidf_vector[i] for i, w in enumerate(features) if w in left_lexicon_lower)
+    right_score = sum(tfidf_vector[i] for i, w in enumerate(features) if w in right_lexicon_lower)
+    centrist_score = sum(tfidf_vector[i] for i, w in enumerate(features) if w in centrist_lexicon_lower)
+    
+    return left_score, right_score, centrist_score
+
 
 # ------------------- Source Bias Weights ------------------- #
 def get_source_bias_weight(source):
