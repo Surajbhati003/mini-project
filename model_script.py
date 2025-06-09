@@ -134,24 +134,23 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
 from transformers import AutoConfig
 from transformers import pipeline
+import streamlit as st
 
 # Set device
 @st.cache_resource
 def set_model():
     device = torch.device("cpu")
     print("Loading main model")
-    # Load tokenizer and model from fine-tuned path
-    # Set device
     tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
     model = AutoModelForSequenceClassification.from_pretrained(
         "surajbhati003/political-leaning-model",
         output_hidden_states=True
     ).to(device)
+    return tokenizer, model, device
 
+tokenizer, model, device = set_model()
 
 mpath='surajbhati003/political-leaning-model'
-
-set_model()
 
 
 
