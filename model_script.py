@@ -135,6 +135,19 @@ import torch.nn.functional as F
 from transformers import AutoConfig
 from transformers import pipeline
 
+# Set device
+@st.cache_resource
+def set_model():
+    device = torch.device("cpu")
+    print("Loading main model")
+    # Load tokenizer and model from fine-tuned path
+    # Set device
+    tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "surajbhati003/political-leaning-model",
+        output_hidden_states=True
+    ).to(device)
+
 
 mpath='surajbhati003/political-leaning-model'
 
@@ -165,18 +178,6 @@ centrist_lexicon = clean_lexicon(remove_duplicates(centrist_lexicon))
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
 
-# Set device
-@st.cache_resource
-def set_model():
-    device = torch.device("cpu")
-    print("Loading main model")
-    # Load tokenizer and model from fine-tuned path
-    # Set device
-    tokenizer = AutoTokenizer.from_pretrained("surajbhati003/political-leaning-model")
-    model = AutoModelForSequenceClassification.from_pretrained(
-        "surajbhati003/political-leaning-model",
-        output_hidden_states=True
-    ).to(device)
 
 
 # Map label indices to human-readable labels (based on training)
