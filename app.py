@@ -231,6 +231,8 @@ if st.button("Analyze Political Leaning", type="primary", use_container_width=Tr
                 sns.barplot(
                     x=list(tfidf_data.values()), 
                     y=list(tfidf_data.keys()),
+                    hue=list(tfidf_data.keys()),
+                    legend=False,
                     palette=colors,
                     orient='h',
                     ax=ax2

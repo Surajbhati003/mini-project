@@ -131,7 +131,6 @@ from readability import Document
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import (
-    RobertaTokenizer, RobertaModel,
     AutoTokenizer, AutoModelForSequenceClassification,
     AutoConfig, pipeline
 )
@@ -295,8 +294,17 @@ def extract_article_info_fallback(url):
 
 # ------------------- Summary ------------------- #
 def generate_neutral_summary(text):
-    summary = summarizer(text, max_length=150, min_length=40, do_sample=False)
-    return summary[0]['summary_text']
+    try:
+        # Truncate text to prevent token limit issues
+        if len(text) > 4000:  # Conservative limit
+            text = text[:4000]
+        
+        summary = summarizer(text, max_length=150, min_length=40, do_sample=False, truncation=True)
+        return summary[0]['summary_text']
+    except Exception as e:
+        # Fallback to first few sentences
+        sentences = text.split('.')[:3]
+        return '. '.join(s.strip() for s in sentences if s.strip()) + '.'
 
 # ------------------- Report Printer ------------------- #
 def print_structured_bias_report(result):
