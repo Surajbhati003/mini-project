@@ -10,7 +10,6 @@
 
 *An AI-powered tool for detecting political bias in news articles and generating neutral summaries*
 
-[🚀 Demo](#demo) • [📋 Features](#features) • [🛠️ Installation](#installation) • [📖 Usage](#usage) • [🤖 Model](#model) • [📊 Dataset](#dataset)
 
 </div>
 
