@@ -323,4 +323,4 @@ with right:
     st.caption("OpIndia, Swarajya, Republic Bharat, Zee News, NDTV, ABP")
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Nishkarsh: Lens to unbiased News v1.0 | © 2023")
+st.sidebar.caption("Nishkarsh: Lens to unbiased News v1.0 | © 2025")
