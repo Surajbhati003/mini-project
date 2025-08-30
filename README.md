@@ -326,7 +326,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Suraj Bhati** - *Initial work* - [@surajbhati003](https://github.com/surajbhati003)
+- **Suraj Bhati** - [@surajbhati003](https://github.com/surajbhati003)
+- **ShreeLakshmi Hegde** - [@shreehegde](https://github.com/shreehegde)
+- **Swastik Sharma** - [@SynfulZ](https://github.com/SynfulZ)
+- **Priyanshu Bhojwani** - [@Priyanshux26](https://github.com/Priyanshux26)
 
 ---
 
@@ -349,7 +352,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 
 **⭐ If you found this project helpful, please give it a star! ⭐**
-
-Made with ❤️ by [Suraj Bhati](https://github.com/surajbhati003)
 
 </div>
